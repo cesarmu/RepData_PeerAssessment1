@@ -1,27 +1,35 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author: "César Muñoz"
-date: "Saturday, June 13, 2015"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
+CÃ©sar MuÃ±oz  
+Saturday, June 13, 2015  
 
 ### Loading Libraries
-```{r}
+
+```r
     library(sqldf)
+```
+
+```
+## Loading required package: gsubfn
+## Loading required package: proto
+## Loading required package: RSQLite
+## Loading required package: DBI
+```
+
+```r
     library(lattice)
 ```
 
 ## Loading and preprocessing the data
 
 Loading activity file and assigning data to "stepsData" dataframe
-```{r}
+
+```r
     stepsData <- read.csv("activity.csv")
 ```
 Creating the stepsDataNoNA dataset omiting NA values
 
-```{r}
+
+```r
     stepsDataNoNA <- na.omit(stepsData)
 ```
 
@@ -29,45 +37,67 @@ Creating the stepsDataNoNA dataset omiting NA values
 For this part of the assignment the missing values had been ignored.
 
 Group and sum data.
-```{r}
-    sumSteps <- aggregate(stepsDataNoNA[,1], list(minute=stepsDataNoNA$date), sum)
-```    
-1. Make a histogram of the total number of steps taken each day
-```{r fig.width=5, fig.height=4}
 
+```r
+    sumSteps <- aggregate(stepsDataNoNA[,1], list(minute=stepsDataNoNA$date), sum)
+```
+1. Make a histogram of the total number of steps taken each day
+
+```r
     hist(sumSteps$x, breaks=seq(0,25000,by=5000), freq=TRUE, 
          xlab="day", main="Total steps by day", col="Red")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
 2. Calculate and report the mean and median total number of steps taken per day
 
-```{r}
+
+```r
     mean(sumSteps$x)
 ```
-```{r}
+
+```
+## [1] 10766.19
+```
+
+```r
     median(sumSteps$x)
-```    
+```
+
+```
+## [1] 10765
+```
 ## What is the average daily activity pattern?
 
 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
 First group and obtain the avergae steps from the dataset without NA values.
-```{r}
+
+```r
     averageSteps <- aggregate(stepsDataNoNA[,1], list(interval=stepsDataNoNA$interval), mean)
 ```
 after make the plot.
-```{r fig.width=5, fig.height=4}
 
+```r
     plot(averageSteps$interval, averageSteps$x, type="l",
          xlab="Five min interval", ylab="Steps", 
          main="The average number of steps taken")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 
+
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r}
+
+```r
     max_interval <- averageSteps[which.max(averageSteps$x),]
     max_interval
+```
+
+```
+##     interval        x
+## 104      835 206.1698
 ```
 The 835 interval contains the maximum number of steps.
 
@@ -75,15 +105,28 @@ The 835 interval contains the maximum number of steps.
 
 1.Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
-```{r}
+
+```r
     NaValuesData <- sqldf('select s.* from "stepsData" as s
                           where s.steps is null
                           order by s.date, s.interval')
-    #Número de registros con NA
+```
+
+```
+## Loading required package: tcltk
+```
+
+```r
+    #NÃºmero de registros con NA
     print(nrow(NaValuesData))
 ```
+
+```
+## [1] 2304
+```
 2 and 3 Creating a new dataset, filling the NA Values with mean for that 5-minute interval
-```{r}
+
+```r
     fillMeanValuesData <- sqldf('select s.*, a.x
                                  from "averageSteps" as a
                                 join "stepsData" as s
@@ -96,14 +139,18 @@ fillMeanValuesData$steps[is.na(fillMeanValuesData$steps)] <- fillMeanValuesData$
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. 
 
 Group and sum data into a new dataset.
-```{r}
+
+```r
 sumMeanValuesData <- aggregate(fillMeanValuesData[,1], list(y=fillMeanValuesData$date), sum)
 ```
 Making the plot.
-```{r fig.width=5, fig.height=4}
+
+```r
     hist(sumMeanValuesData$x, breaks=seq(0,25000,by=5000), 
          freq=TRUE, xlab="day", main="Total steps by day", col="Red")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-14-1.png) 
 
 Do these values differ from the estimates from the first part of the assignment? 
 
@@ -117,17 +164,22 @@ R: The frequency counts increases.
 
 1.Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 
-```{r}
+
+```r
     fillMeanValuesData$day <- c("weekend", "weekday", "weekday", "weekday", "weekday", 
                     "weekday", "weekend")[as.POSIXlt(fillMeanValuesData$date)$wday + 1]
 ```
-2.Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+2.Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using simulated data:
 
-```{r}
+
+
+```r
     stepsByDay <- aggregate(steps ~ interval + day, data = fillMeanValuesData, mean)
     
     xyplot(steps ~ interval | day, data = stepsByDay, type="l",
            xlab="Interval", ylab="Number of steps", layout=c(1,2))
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-16-1.png) 
 
 
